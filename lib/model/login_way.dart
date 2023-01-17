@@ -1,0 +1,4 @@
+enum LoginWay{
+  google,
+  email
+}

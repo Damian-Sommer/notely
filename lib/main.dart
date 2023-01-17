@@ -1,9 +1,12 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:notely/view/page/home_page.dart';
+import 'package:notely/view/page/welcome_page.dart';
 
 import 'firebase_options.dart';
+
+late final db;
 
 void main() async {
 
@@ -17,6 +20,7 @@ void main() async {
     webRecaptchaSiteKey: 'recaptcha-v3-site-key',
     androidProvider: AndroidProvider.debug,
   );
+  db = FirebaseFirestore.instance;
 
   runApp(const MyApp());
 }
@@ -31,7 +35,8 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const HomePage(),
+      debugShowCheckedModeBanner: false,
+      home: const WelcomePage(),
     );
   }
 }
