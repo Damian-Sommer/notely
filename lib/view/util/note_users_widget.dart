@@ -22,9 +22,7 @@ class _NoteUsersState extends State<NoteUsers>{
 
 
   Future<UserModel> noteUsers() async {
-    return await updateOrCreateController.firebaseManager
-        .downloadDataOfUser()
-        .then((value) {
+    return await updateOrCreateController.firebaseManager.getUserById(updateOrCreateController.noteModel.uid).then((value){
       return value;
     });
   }
@@ -79,11 +77,6 @@ class _NoteUsersState extends State<NoteUsers>{
                             });
                             if (usersTmp != null) {
                               users = usersTmp;
-
-                              print("h");
-                              print(users.length);
-                              print(users[0].name);
-
                               usersWidget = ListView.builder(
                                 shrinkWrap: true,
                                 itemCount: users.length,

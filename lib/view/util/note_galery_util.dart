@@ -9,9 +9,11 @@ import 'note_widget.dart';
 class NoteGaleryUtil extends StatefulWidget {
   List noteList = <NoteModel>[];
   List noteIdList = [];
+  List notesAccessibleList = <NoteModel>[];
+  List noteAccessibleIdList = [];
 
   NoteGaleryUtil(
-      {super.key, required this.noteList, required this.noteIdList});
+      {super.key, required this.noteList, required this.noteIdList, required this.notesAccessibleList, required this.noteAccessibleIdList});
 
   @override
   _NoteGaleryUtilState createState() => _NoteGaleryUtilState();
@@ -20,10 +22,30 @@ class NoteGaleryUtil extends StatefulWidget {
 class _NoteGaleryUtilState extends State<NoteGaleryUtil> {
   @override
   Widget build(BuildContext context) {
-    return getRezepte();
+    return Column(
+      children: [
+        Container(
+          child: Column(
+            children: [
+              Text("Personal Notes"),
+              getNotesPersonal(),
+            ],
+          ),
+        ),
+        Container(
+          child: Column(
+            children: [
+              Text("Accessible Notes"),
+              getNotesAccessible(),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
-  Widget getRezepte() {
+  Widget getNotesPersonal() {
+    print("Personal Notes: ${widget.noteList.length}");
     return OrientationBuilder(
       builder: (context, orientation) {
         return ListView.builder(
@@ -31,6 +53,7 @@ class _NoteGaleryUtilState extends State<NoteGaleryUtil> {
           itemCount: widget.noteList.length,
           shrinkWrap: true,
           itemBuilder: (context, index) {
+
             return Center(
               child: Column(
                 children: <Widget>[
@@ -71,6 +94,48 @@ class _NoteGaleryUtilState extends State<NoteGaleryUtil> {
     );
   }
 
+  Widget getNotesAccessible() {
+    print("Accessible Notes: ${widget.notesAccessibleList.length}");
+    return OrientationBuilder(
+      builder: (context, orientation) {
+        return ListView.builder(
+          physics: const ScrollPhysics(),
+          itemCount: widget.notesAccessibleList.length,
+          shrinkWrap: true,
+          itemBuilder: (context, index) {
+            return Center(
+              child: Column(
+                children: <Widget>[
+                  Container(
+                    margin: const EdgeInsets.all(5),
+                    child: InkWell(
+                      onTap: () {
+                        navigateToAccessibleDetails(widget.noteAccessibleIdList[index]);
+                      },
+                      child: NoteWidget(
+                          name: widget.notesAccessibleList[index].name),
+                    ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      FloatingActionButton(
+                        onPressed: () async{
+                          await navigateToAccessibleDetails(widget.noteAccessibleIdList[index]);
+                        },
+                        child: const Icon(Icons.edit),
+                      ),
+                    ],
+                  )
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   Future<void> deleteNote(String id) async{
     NoteModel noteModel = NoteModel();
     noteModel.delete(id);
@@ -96,4 +161,22 @@ class _NoteGaleryUtilState extends State<NoteGaleryUtil> {
     widget.noteIdList = noteGaleryController.notesIdList;
     setState(() {});
   }
+
+  Future<void> navigateToAccessibleDetails(String id) async {
+    NoteController noteController = NoteController();
+    noteController.id = id;
+    await noteController.fetchData();
+    await Navigator.push(context, MaterialPageRoute(builder: (context) {
+      print("Note Accessible ID: $id");
+      return UpdateOrCreatePage(id: id, updateOrCreate: 0,);
+    }));
+    NoteGaleryController noteGaleryController = NoteGaleryController();
+    await noteGaleryController.fetchData();
+    widget.noteList = noteGaleryController.notesList;
+    widget.noteIdList = noteGaleryController.notesIdList;
+    widget.notesAccessibleList = noteGaleryController.notesAccessibleList;
+    widget.noteAccessibleIdList = noteGaleryController.notesAccessibleIdList;
+    setState(() {});
+  }
+
 }

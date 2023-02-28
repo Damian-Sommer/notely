@@ -43,13 +43,13 @@ class _HomePageState extends State<HomePage> {
             builder: (context, AsyncSnapshot<void> snapshot) {
               Widget returnWidget = const Text("Data is Loading");
               if (snapshot.connectionState == ConnectionState.done) {
-                returnWidget = Column(
-                  children: [
-                    NoteGaleryUtil(
-                      noteList: noteGaleryController.notesList,
-                      noteIdList: noteGaleryController.notesIdList,
-                    ),
-                  ],
+                print("finished");
+                returnWidget = NoteGaleryUtil(
+                  noteList: noteGaleryController.notesList,
+                  noteIdList: noteGaleryController.notesIdList,
+                  notesAccessibleList: noteGaleryController.notesAccessibleList,
+                  noteAccessibleIdList:
+                      noteGaleryController.notesAccessibleIdList,
                 );
               } else if (snapshot.connectionState == ConnectionState.waiting) {
                 returnWidget = const Text("Loading Data");

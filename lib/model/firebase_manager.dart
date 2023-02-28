@@ -24,6 +24,7 @@ class FirebaseManager {
   LoginWay loginWay = LoginWay.email;
   String? uid = null;
   List notesIdList = [];
+  List notesIDAccessible = [];
   bool isvalid = true;
   Future<void> signIn(
       {required String email,
@@ -306,6 +307,31 @@ class FirebaseManager {
       noteId = doc.id,
     });
   }
+
+
+  dynamic searchForNotesAccessible()async {
+    List notesListTempAccessible = [];
+    notesIDAccessible.clear();
+    try{
+      QuerySnapshot notes = await FirebaseFirestore.instance.collection("notes").where('addedUsers', isNotEqualTo: []).get();
+      if(notes.docs.isNotEmpty){
+        for(int i = 0; i < notes.docs.length; i++){
+          for (var element in List.from(notes.docs[i]["addedUsers"])) {
+            if(element["uid"] == uid!){
+              notesListTempAccessible.add(notes.docs[i].data());
+              notesIDAccessible.add(notes.docs[i].id);
+            }
+          }
+        }
+        return notesListTempAccessible;
+      }
+      return null;
+    }catch (e) {
+      print(e.toString());
+      return null;
+    }
+  }
+
 
   dynamic downloadNotesFromUser() async {
     List notesListTemp = [];

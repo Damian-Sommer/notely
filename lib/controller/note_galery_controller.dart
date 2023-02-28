@@ -13,26 +13,49 @@ class NoteGaleryController{
   List notesList = <NoteModel>[];
   List notesIdList = [];
 
+  List notesAccessibleList = <NoteModel>[];
+  List notesAccessibleIdList = [];
+
   Future<void> fetchData() async {
     List<NoteModel> noteListTemp = <NoteModel>[];
+    List<NoteModel> noteAccessibleListTemp = <NoteModel>[];
+
     print("Fetching Data");
     FirebaseManager instance = FirebaseManager();
-    dynamic rezepteTemp = await instance.downloadNotesFromUser();
-    dynamic rezepteIdTemp = FirebaseManager().notesIdList;
-    if (rezepteTemp == null) {
-      print("Didn't get any Rezepte");
+
+    dynamic notesAccessiblyTMP = await instance.searchForNotesAccessible();
+    dynamic notesAccessibleIDTMP = FirebaseManager().notesIDAccessible;
+    dynamic notesPersonalTMP = await instance.downloadNotesFromUser();
+    dynamic notesPersonalIdTMP = FirebaseManager().notesIdList;
+    if (notesPersonalTMP == null) {
+      print("Didn't get any Personal Notes");
       notesList = <NoteModel>[];
       notesIdList = [];
-      return;
     } else {
-      noteListTemp = await NoteModel.fromMapList(rezepteTemp).then(
+      noteListTemp = await NoteModel.fromMapList(notesPersonalTMP).then(
             (value) {
           return value;
         },
       );
       notesList = noteListTemp;
-      notesIdList = rezepteIdTemp;
-      print("Finished Fetching Data");
+      print(notesList.length);
+      notesIdList = notesPersonalIdTMP;
+      print("Finished Fetching Personal Data");
+    }
+
+    if (notesAccessiblyTMP == null) {
+      print("Didn't get any accessible Notes");
+      notesAccessibleList = <NoteModel>[];
+      notesAccessibleIdList = [];
+    } else {
+      noteAccessibleListTemp = await NoteModel.fromMapList(notesAccessiblyTMP).then(
+            (value) {
+          return value;
+        },
+      );
+      notesAccessibleList = noteAccessibleListTemp;
+      notesAccessibleIdList = notesAccessibleIDTMP;
+      print("Finished Fetching Accessible Data");
     }
     return;
   }
