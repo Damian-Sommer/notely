@@ -1,35 +1,35 @@
+import 'dart:io';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:notely/model/user_model.dart';
+import 'package:notely/model/note_model.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 import 'package:http/http.dart' as http;
 
-import 'dart:io';
-
+import 'package:notely/model/user_model.dart';
 import '../main.dart';
+import 'auth_service.dart';
+import 'login_way.dart';
 
 class FirebaseManager {
   static final FirebaseManager _instance = FirebaseManager._internal();
-
   factory FirebaseManager() => _instance;
-
   FirebaseManager._internal();
 
   final FirebaseStorage storage = FirebaseStorage.instance;
-
-  ///List momentList = <Moment>[];
-  ///List momentIdList = <String>[];
+  LoginWay loginWay = LoginWay.email;
   String? uid = null;
-  List rezepteIdList = [];
+  List notesIdList = [];
   bool isvalid = true;
   Future<void> signIn(
       {required String email,
       required String password,
       required BuildContext context}) async {
+    loginWay = LoginWay.email;
     isvalid = true;
     try {
       await FirebaseAuth.instance
@@ -42,10 +42,16 @@ class FirebaseManager {
       isvalid = false;
       if (e.code == 'user-not-found') {
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No user Found with this Email')));
+          const SnackBar(
+            content: Text('No user Found with this Email'),
+          ),
+        );
       } else if (e.code == 'wrong-password') {
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Password did not match')));
+          const SnackBar(
+            content: Text('Password did not match'),
+          ),
+        );
       }
     }
   }
@@ -53,13 +59,13 @@ class FirebaseManager {
   Future<void> signInWithCredential(
       {required OAuthCredential credential}) async {
     print("sign in with credentials");
-
+    loginWay = LoginWay.google;
     await FirebaseAuth.instance.signInWithCredential(credential);
     User? currentUser = FirebaseAuth.instance.currentUser;
-    uid = currentUser!.uid!;
+    uid = currentUser!.uid;
     String name = currentUser.displayName!;
     String email = currentUser.email!;
-    File file = await _fileFromImageUrl(currentUser.photoURL!).then((value){
+    File file = await _fileFromImageUrl(currentUser.photoURL!).then((value) {
       return value;
     });
     String filename = await checkUser().then((value) {
@@ -73,18 +79,6 @@ class FirebaseManager {
     return;
   }
 
-  Future<File> _fileFromImageUrl(String url) async {
-    final response = await http.get(Uri.parse(url));
-
-    final documentDirectory = await getApplicationDocumentsDirectory();
-
-    final file = File(path.join(documentDirectory.path, 'ieofmawkjeiwoajfklefmkcl.jpeg'));
-
-    file.writeAsBytesSync(response.bodyBytes);
-
-    return file;
-  }
-
   Future<void> register(
       {required String email,
       required String password,
@@ -96,11 +90,9 @@ class FirebaseManager {
       FirebaseAuth firebaseAuth = FirebaseAuth.instance;
       UserCredential userCredential = await firebaseAuth
           .createUserWithEmailAndPassword(email: email, password: password)
-          .then(
-        (value) {
-          return value;
-        },
-      );
+          .then((value) {
+        return value;
+      });
       await FirebaseAuth.instance.currentUser!.updateDisplayName(name);
       await FirebaseAuth.instance.currentUser!.updateEmail(email);
       await saveUser(name, email, userCredential.user!.uid, file);
@@ -121,8 +113,15 @@ class FirebaseManager {
   }
 
   Future<void> logout() async {
+    print("Logout");
     uid = "";
-    await FirebaseAuth.instance.signOut();
+    if (loginWay == LoginWay.email) {
+      print("Logout Email");
+      await FirebaseAuth.instance.signOut();
+    } else {
+      AuthService authService = AuthService();
+      await authService.logOut();
+    }
     return;
   }
 
@@ -136,7 +135,6 @@ class FirebaseManager {
     print('Old Path: ${file.path}');
     print('New Path: ${fileNew.path}');
     print('New Filename: $filename');
-
     await FirebaseFirestore.instance
         .collection('users')
         .doc(uid)
@@ -212,6 +210,55 @@ class FirebaseManager {
     }
   }
 
+  Future<dynamic> getUserByName(String name) async {
+    QuerySnapshot doc = await FirebaseFirestore.instance.collection("users").where("name", isGreaterThanOrEqualTo: name)
+        .where("name", isLessThan: '${name}z').get();
+    if (doc.docs.isNotEmpty) {
+      List<UserModel> users = [];
+
+      for(var doc in doc.docs){
+        Map<String, dynamic> fetchDoc = doc.data() as Map<String, dynamic>;
+        UserModel user = UserModel();
+        user.uid = doc.id;
+        user.name = fetchDoc["name"];
+        user.email = fetchDoc["email"];
+        user.file =
+        await downloadImageByName(filename: fetchDoc["profilepic"], uid: user.uid)
+            .then(
+              (value) {
+            return value;
+          },
+        );
+        users.add(user);
+      }
+      return users;
+    } else {
+      return null;
+    }
+  }
+
+  Future<dynamic> getUserById(String id) async {
+    DocumentSnapshot doc =
+        await FirebaseFirestore.instance.collection("users").doc(id).get();
+    if (doc.exists) {
+      Map<String, dynamic> fetchDoc = doc.data() as Map<String, dynamic>;
+      UserModel user = UserModel();
+      user.uid = id;
+      user.name = fetchDoc["name"];
+      user.email = fetchDoc["email"];
+      user.file =
+          await downloadImageByName(filename: fetchDoc["profilepic"], uid: id)
+          .then(
+            (value) {
+          return value;
+        },
+      );
+      return user;
+    } else {
+      return null;
+    }
+  }
+
   Future<void> deletePhoto({required String filename}) async {
     Reference referenceRoot =
         storage.ref().child("images").child(uid!).child(filename);
@@ -234,5 +281,77 @@ class FirebaseManager {
 
   void deleteUser() async {
     FirebaseFirestore.instance.collection("users").doc(uid).delete();
+  }
+
+  Future<File> _fileFromImageUrl(String url) async {
+    final response = await http.get(Uri.parse(url));
+    final documentDirectory = await getApplicationDocumentsDirectory();
+    final file = File(
+        path.join(documentDirectory.path, 'ieofmawkjeiwoajfklefmkcl.jpeg'));
+    file.writeAsBytesSync(response.bodyBytes);
+    return file;
+  }
+
+  Future<void> uploadNote({required NoteModel note}) async {
+    note.uid = uid!;
+
+    print("toMap");
+    final Map<String, dynamic> map = NoteModel.toMap(note: note);
+    String noteId = "";
+    await db
+        .collection("notes")
+        .add(map)
+        .then((DocumentReference doc) => {
+      print('Note added with ID: ${doc.id}'),
+      noteId = doc.id,
+    });
+  }
+
+  dynamic downloadNotesFromUser() async {
+    List notesListTemp = [];
+    notesIdList.clear();
+    try {
+      QuerySnapshot notes =
+      await FirebaseFirestore.instance.collection("notes").where("uid", isEqualTo: uid).get();
+      if (notes.docs.isEmpty) {
+
+        return null;
+      } else {
+        for (var elem in notes.docs) {
+          notesListTemp.add(elem.data());
+          notesIdList.add(elem.id);
+        }
+        return notesListTemp;
+      }
+    } catch (e) {
+      print(e.toString());
+      return null;
+    }
+  }
+  Future<NoteModel> getNoteById(String id) async {
+    DocumentSnapshot doc =
+    await FirebaseFirestore.instance.collection("notes").doc(id).get();
+    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+    NoteModel temp = await NoteModel.fromMap(data).then(
+          (value) {
+        return value;
+      },
+    );
+    return temp;
+  }
+
+  Future<void> updateNote(
+      {required NoteModel note, required String id}) async {
+
+    final Map<String, dynamic> map = NoteModel.toMap(note: note);
+    String rezeptId = "";
+    await db
+        .collection("notes")
+        .doc(id)
+        .update(map);
+  }
+
+  void deleteNote({required String id}) {
+    FirebaseFirestore.instance.collection("notes").doc(id).delete();
   }
 }

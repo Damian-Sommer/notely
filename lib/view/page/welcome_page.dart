@@ -13,7 +13,7 @@ class _WelcomePageState extends State<WelcomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Notely"),
+        title: const Text("Notely"),
       ),
       body: const LoginPage(),
     );

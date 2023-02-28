@@ -1,0 +1,4 @@
+enum SaveOrUpdate {
+  save,
+  update
+}

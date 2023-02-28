@@ -3,6 +3,7 @@ import 'dart:io';
 import 'firebase_manager.dart';
 
 class UserModel{
+  String uid = "";
   String name = "";
   String email = "";
   File file = File("");

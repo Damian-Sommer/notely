@@ -28,7 +28,7 @@ class _AppBarContentState extends State<AppBarContent> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
                 const Text(
-                  'Cookbook',
+                  'Notely',
                   style: TextStyle(
                       color: Color(0xff151414),
                       fontSize: 30,
