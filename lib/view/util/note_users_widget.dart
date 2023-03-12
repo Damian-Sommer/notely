@@ -5,24 +5,27 @@ import 'package:notely/controller/update_or_create_controller.dart';
 import '../../model/firebase_manager.dart';
 import '../../model/user_model.dart';
 
-class NoteUsers extends StatefulWidget{
+class NoteUsers extends StatefulWidget {
   const NoteUsers({super.key});
 
   @override
   _NoteUsersState createState() => _NoteUsersState();
 }
 
-class _NoteUsersState extends State<NoteUsers>{
-  UpdateOrCreateController updateOrCreateController = UpdateOrCreateController();
-
+class _NoteUsersState extends State<NoteUsers> {
+  UpdateOrCreateController updateOrCreateController =
+      UpdateOrCreateController();
+  Map<String, bool> selectedFlag = {};
+  bool isSelectionMode = false;
   @override
   Widget build(BuildContext context) {
     return users();
   }
 
-
   Future<UserModel> noteUsers() async {
-    return await updateOrCreateController.firebaseManager.getUserById(updateOrCreateController.noteModel.uid).then((value){
+    return await updateOrCreateController.firebaseManager
+        .getUserById(updateOrCreateController.noteModel.uid)
+        .then((value) {
       return value;
     });
   }
@@ -30,7 +33,11 @@ class _NoteUsersState extends State<NoteUsers>{
   Widget users() {
     return GestureDetector(
       onTap: () {
-        Widget usersWidget = usersAddedWidget();
+        Widget usersWidget = const SizedBox();
+
+        if (updateOrCreateController.addedUsers.isNotEmpty) {
+          usersWidget = usersAddedWidget();
+        }
         List<UserModel> users = [];
         AlertDialog dialog = AlertDialog(
           content: StatefulBuilder(
@@ -44,7 +51,8 @@ class _NoteUsersState extends State<NoteUsers>{
                       children: [
                         Flexible(
                           child: TextFormField(
-                            controller: updateOrCreateController.searchUserController,
+                            controller:
+                                updateOrCreateController.searchUserController,
                             autofocus: true,
                             maxLines: 1,
                             decoration: InputDecoration(
@@ -54,10 +62,35 @@ class _NoteUsersState extends State<NoteUsers>{
                                   color: Color(0xff262424),
                                 ),
                                 onPressed: () {
-                                  updateOrCreateController.searchUserController.clear();
+                                  updateOrCreateController.searchUserController
+                                      .clear();
                                   setState(
-                                        () {
-                                      usersWidget = usersAddedWidget();
+                                    () {
+                                      usersWidget = Column(
+                                        children: [
+                                          InkWell(
+                                            child: Row(
+                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                              children: [
+                                                Row(
+                                                  children: [
+                                                    helpingWidget(),
+                                                    Image(
+                                                      image: FileImage(
+                                                          updateOrCreateController.noteOwner.file),
+                                                      height: 40,
+                                                    ),
+                                                    Text(updateOrCreateController.noteOwner.name),
+                                                  ],
+                                                ),
+                                                const Text("Owner"),
+                                              ],
+                                            ),
+                                          ),
+                                          usersAddedWidget(),
+                                        ],
+                                      );
+                                      ///usersWidget = usersAddedWidget();
                                     },
                                   );
                                 },
@@ -70,66 +103,72 @@ class _NoteUsersState extends State<NoteUsers>{
                             FirebaseManager firebaseManager = FirebaseManager();
 
                             dynamic usersTmp = await firebaseManager
-                                .getUserByName(
-                                updateOrCreateController.searchUserController.text)
+                                .getUserByName(updateOrCreateController
+                                    .searchUserController.text)
                                 .then((value) {
                               return value;
                             });
                             if (usersTmp != null) {
                               users = usersTmp;
-                              usersWidget = ListView.builder(
-                                shrinkWrap: true,
-                                itemCount: users.length,
-                                itemBuilder: (BuildContext context, int index) {
-                                  if (updateOrCreateController.noteModel.uid !=
-                                      users[index].uid) {
-                                    return InkWell(
-                                      onTap: () {
-                                        if (updateOrCreateController.noteModel.uid !=
-                                            users[index].uid) {
-                                          print(
-                                              "User Added: ${users[index].uid}; ${users[index].name}");
-                                          updateOrCreateController.addedUsers
-                                              .add(users[index]);
-                                          setState(() {});
-                                        }
-                                      },
-                                      child: Row(
-                                        children: [
-                                          Image(
-                                            image: FileImage(users[index].file),
-                                            height: 40,
-                                          ),
-                                          Text(
-                                            users[index].name,
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  } else {
-                                    return InkWell(
-                                      child: Row(
-                                        mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Row(
-                                            children: [
-                                              Image(
-                                                image: FileImage(
-                                                    users[index].file),
-                                                height: 40,
-                                              ),
-                                              Text(
-                                                users[index].name,
-                                              ),
-                                            ],
-                                          ),
-                                          const Text("owner"),
-                                        ],
-                                      ),
-                                    );
-                                  }
-                                },
+                              usersWidget = Flexible(
+                                child: ListView.builder(
+                                  shrinkWrap: true,
+                                  itemCount: users.length,
+                                  itemBuilder:
+                                      (BuildContext context, int index) {
+                                    if (updateOrCreateController
+                                            .noteModel.uid !=
+                                        users[index].uid) {
+                                      return InkWell(
+                                        onTap: () {
+                                          if (updateOrCreateController
+                                                  .noteModel.uid !=
+                                              users[index].uid) {
+                                            print(
+                                                "User Added: ${users[index].uid}; ${users[index].name}");
+                                            updateOrCreateController.addedUsers
+                                                .add(users[index]);
+                                            setState(() {});
+                                          }
+                                        },
+                                        child: Row(
+                                          children: [
+                                            Image(
+                                              image:
+                                                  FileImage(users[index].file),
+                                              height: 40,
+                                            ),
+                                            Text(
+                                              users[index].name,
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    } else {
+                                      return InkWell(
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Image(
+                                                  image: FileImage(
+                                                      users[index].file),
+                                                  height: 40,
+                                                ),
+                                                Text(
+                                                  users[index].name,
+                                                ),
+                                              ],
+                                            ),
+                                            const Text("owner"),
+                                          ],
+                                        ),
+                                      );
+                                    }
+                                  },
+                                ),
                               );
                               setState(() {});
                             } else {
@@ -184,58 +223,86 @@ class _NoteUsersState extends State<NoteUsers>{
   }
 
   Widget usersAddedWidget() {
-    return Container(
-      child: ListView.builder(
-        shrinkWrap: true,
-        itemCount: updateOrCreateController.addedUsers.length + 1,
-        itemBuilder: (BuildContext context, int index) {
-          if (index == 0) {
-            /// owner
-            return Container(
-              margin: const EdgeInsets.only(top: 5, bottom: 5),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return ListView.builder(
+      shrinkWrap: true,
+      itemCount: updateOrCreateController.addedUsers.length,
+      itemBuilder: (BuildContext context, int index) {
+        selectedFlag[updateOrCreateController.addedUsers[index].uid] = false;
+        bool isSelected =
+            selectedFlag[updateOrCreateController.addedUsers[index].uid]!;
+        return InkWell(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
                 children: [
-                  Row(
-                    children: [
-                      Image(
-                        image: FileImage(updateOrCreateController.noteOwner.file),
-                        height: 40,
-                      ),
-                      Text(
-                        updateOrCreateController.noteOwner.name,
-                      ),
-                    ],
-                  ),
-                  const Text("Owner"),
+                  _buildSelectIcon(isSelected, index),
+                  Text(updateOrCreateController.addedUsers[index].name),
                 ],
               ),
-            );
-          } else {
-            return Container(
-              margin: const EdgeInsets.only(top: 5, bottom: 5),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Image(
-                        image: FileImage(
-                            updateOrCreateController.addedUsers[index - 1].file),
-                        height: 40,
-                      ),
-                      Text(
-                        updateOrCreateController.addedUsers[index - 1].name,
-                      ),
-                    ],
-                  ),
-                  const Text("Contributor"),
-                ],
-              ),
-            );
-          }
-        },
-      ),
+              const Text("Contributor"),
+            ],
+          ),
+          onLongPress: () {
+            print("select");
+            setState(() {
+              onLongPress(isSelected, index);
+            });
+          },
+          onTap: (){
+
+            setState(() {
+              onTap(isSelected, index);
+            });
+          },
+        );
+      },
     );
+  }
+
+  void onLongPress(bool isSelected, int index) {
+    setState(() {
+      selectedFlag[updateOrCreateController.addedUsers[index].uid] =
+          !isSelected;
+      // If there will be any true in the selectionFlag then
+      // selection Mode will be true
+      isSelectionMode = true;
+    });
+  }
+
+  void onTap(bool isSelected, int index) {
+    if (isSelectionMode) {
+      setState(() {
+        selectedFlag[updateOrCreateController.addedUsers[index].uid] =
+            !isSelected;
+        isSelectionMode = true;
+      });
+    }
+  }
+
+  Widget _buildSelectIcon(bool isSelected, int index) {
+    if (isSelectionMode) {
+      return SizedBox(
+        width: 30,
+        height: 30,
+        child: Icon(
+          isSelected ? Icons.check_box : Icons.check_box_outline_blank,
+          color: Theme.of(context).primaryColor,
+        ),
+      );
+    }else{
+      return Image(
+        image: FileImage(
+            updateOrCreateController.addedUsers[index].file),
+        height: 40,
+      );
+    }
+  }
+
+  Widget helpingWidget(){
+    if(isSelectionMode){
+      return const SizedBox(width: 30, height: 30,);
+    }
+    return const SizedBox();
   }
 }
