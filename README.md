@@ -1,16 +1,18 @@
 # notely
 
-A new Flutter project.
+Notely ist eine Notizenapp die in Flutter geschrieben wurde. Die Notizen können mit anderen Benutzern geteilt werden. Das Design der App ist von den bekannten Post-it Zetteln inspiriert. Die Anmeldung in der App erfolgt über Mail oder mit einem Google Account. 
 
-## Getting Started
+Notely ist dafür gedacht kurze Notizen zu erstellen um sich schnell etwas merken zu können.
 
-This project is a starting point for a Flutter application.
+## Funktionen
+* Notizen machen
+* Titel für Notizen wählen
+* Notizen teilen
+* Mitarbeiter verwalten
+* Notizen individualisieren 
+* Übersicht aller Notizen
 
-A few resources to get you started if this is your first Flutter project:
+## Links
+[Figma](https://www.figma.com/file/Tn7Glvzkh5vgNS1hnUZ4Do/Notely?node-id=0%3A1&t=eFaQULL1NA5NOxuH-1)
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+[Demo Video](https://www.youtube.com/watch?v=_5ZLyP6nTgo)
